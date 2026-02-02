@@ -139,8 +139,6 @@ function onMouseDown(e) {
 
 function onMouseMove(e) {
   if (!isDrawing) return;
-  e.preventDefault();
-  e.stopPropagation();
 
   const currentX = e.clientX;
   const currentY = e.clientY;
@@ -150,24 +148,24 @@ function onMouseMove(e) {
   const left = Math.min(currentX, startX);
   const top = Math.min(currentY, startY);
 
-  selectionBox.style.left = left + 'px';
-  selectionBox.style.top = top + 'px';
   selectionBox.style.width = width + 'px';
   selectionBox.style.height = height + 'px';
+  selectionBox.style.left = left + 'px';
+  selectionBox.style.top = top + 'px';
 }
 
 async function onMouseUp(e) {
   if (!isDrawing) return;
-  e.preventDefault();
-  e.stopPropagation();
   isDrawing = false;
 
-  const rect = {
-    left: parseInt(selectionBox.style.left),
-    top: parseInt(selectionBox.style.top),
-    width: parseInt(selectionBox.style.width),
-    height: parseInt(selectionBox.style.height)
-  };
+  console.log('🖱️ Mouse up');
+
+  // Remove listeners immediately to prevent accidental capture
+  overlay.removeEventListener('mousedown', onMouseDown, true);
+  overlay.removeEventListener('mousemove', onMouseMove, true);
+  overlay.removeEventListener('mouseup', onMouseUp, true);
+
+  const rect = selectionBox.getBoundingClientRect();
 
   console.log('📏 Selection:', rect);
 
@@ -374,8 +372,26 @@ function showResult(result, apiKey) {
       <span class="ocr-label">
         Gốc (${escapeHtml(result.language || 'Unknown')}):
       </span>
-      <div class="ocr-text-block">${escapeHtml(result.original)}</div>
+      <div class="ocr-text-block" id="ocr-original-text">${escapeHtml(result.original)}</div>
       
+      <!-- Actions for Original Text -->
+      <div class="ocr-actions">
+        <button class="ocr-icon-btn" id="ocr-btn-speak" title="Nghe đọc">
+            <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+            Nghe
+        </button>
+        <button class="ocr-icon-btn" id="ocr-btn-mic" title="Luyện phát âm">
+            <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+            Luyện Nói
+        </button>
+      </div>
+
+      <div id="ocr-pronunciation-feedback">
+        <strong>Kết quả phát âm:</strong> <span id="ocr-score-val">--</span>
+        <div id="ocr-said-text" style="margin-top:5px; font-style:italic; color: #888;"></div>
+        <button id="ocr-btn-retry">🔄 Thử lại (Try Again)</button>
+      </div>
+
       <span class="ocr-label">
         Dịch sang:
         <select id="ocr-lang-select" class="ocr-lang-select">
@@ -383,26 +399,34 @@ function showResult(result, apiKey) {
         </select>
       </span>
       <div id="ocr-translation-text" class="ocr-text-block">${escapeHtml(result.translation)}</div>
+      
+      <button id="ocr-scan-next">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="white"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+        Quét tiếp (Next Scan)
+      </button>
+
     </div>
   `;
   document.body.appendChild(resultBox);
 
-  // Set initial select value (heuristic: detect if translation is english, etc. but simple default is fine or passed from config)
-  // We don't have current targetLang handy easily without passing it down, but 'vi' is default usually.
+  setupResultEvents(result, apiKey, resultBox);
 
+  // Make draggable
+  makeDraggable(resultBox);
+}
+
+function setupResultEvents(result, apiKey, resultBox) {
+  // 1. Language Change
   const select = document.getElementById('ocr-lang-select');
-
-  // Handle language change
   select.addEventListener('change', async (e) => {
     const newLang = e.target.value;
     const transDiv = document.getElementById('ocr-translation-text');
-    const originalText = result.original;
 
     transDiv.textContent = 'Đang dịch lại...';
     transDiv.style.opacity = '0.7';
 
     try {
-      const newResult = await translateTextOnly(originalText, newLang, apiKey);
+      const newResult = await translateTextOnly(result.original, newLang, apiKey);
       transDiv.textContent = newResult.translation;
       transDiv.style.opacity = '1';
     } catch (err) {
@@ -411,17 +435,165 @@ function showResult(result, apiKey) {
     }
   });
 
-  // Close button event
+  // 2. TTS (Speak)
+  const speakBtn = document.getElementById('ocr-btn-speak');
+  speakBtn.addEventListener('click', () => {
+    // New: Google TTS
+    const langName = result.language || 'English';
+    const langCode = mapLanguageToCode(langName);
+    playGoogleTTS(result.original, langCode);
+  });
+
+  // 3. Pronunciation (Mic)
+  const micBtn = document.getElementById('ocr-btn-mic');
+
+  const handleMicClick = () => {
+    if (!('webkitSpeechRecognition' in window)) {
+      showError('Lỗi', 'Trình duyệt không hỗ trợ Web Speech API.');
+      return;
+    }
+
+    const recognition = new webkitSpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    // Map language for recognition
+    const langName = result.language || 'English';
+    recognition.lang = mapLanguageToCode(langName, true); // true for full locale like vi-VN
+
+    // Helper to start recording
+    const startRecording = () => {
+      micBtn.innerHTML = '🎤 Đang nghe...';
+      micBtn.style.color = '#d63031';
+
+      const feedbackBox = document.getElementById('ocr-pronunciation-feedback');
+      feedbackBox.classList.add('active');
+      document.getElementById('ocr-said-text').textContent = 'Hãy đọc đoạn văn bản trên...';
+      document.getElementById('ocr-score-val').textContent = '--';
+      document.getElementById('ocr-btn-retry').style.display = 'none';
+
+      try { recognition.start(); } catch (e) { console.warn('Recognition already started'); }
+    };
+
+    // Initial start
+    startRecording();
+
+    // Retry button logic
+    const retryBtn = document.getElementById('ocr-btn-retry');
+    retryBtn.onclick = startRecording;
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      const score = calculateSimilarity(result.original, transcript);
+
+      document.getElementById('ocr-said-text').textContent = `Bạn nói: "${transcript}"`;
+
+      const scoreEl = document.getElementById('ocr-score-val');
+      scoreEl.textContent = `${Math.round(score * 100)}%`;
+      scoreEl.className = score > 0.8 ? 'ocr-score-high' : (score > 0.5 ? 'ocr-score-mid' : 'ocr-score-low');
+
+      // Show retry
+      document.getElementById('ocr-btn-retry').style.display = 'block';
+
+      micBtn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg> Luyện Nói`;
+      micBtn.style.color = '';
+    };
+
+    recognition.onerror = (event) => {
+      console.error('Speech error', event);
+      micBtn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg> Luyện Nói`;
+      micBtn.style.color = '';
+
+      if (event.error !== 'no-speech' && event.error !== 'aborted') {
+        showError('Lỗi Micro', event.error);
+      }
+    };
+
+    recognition.onend = () => {
+      if (micBtn.innerHTML.includes('Đang nghe')) {
+        micBtn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg> Luyện Nói`;
+        micBtn.style.color = '';
+      }
+    };
+  };
+
+  micBtn.addEventListener('click', handleMicClick);
+
+  // 4. Close
   const closeBtn = document.getElementById('ocr-result-close');
   if (closeBtn) {
     closeBtn.addEventListener('click', (e) => {
-      e.stopPropagation(); // Prevent drag start if clicked on button
+      e.stopPropagation();
       resultBox.remove();
     });
   }
 
-  // Make draggable
-  makeDraggable(resultBox);
+  // 5. Scan Next
+  const nextBtn = document.getElementById('ocr-scan-next');
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      resultBox.remove();
+      startCapture();
+    });
+  }
+}
+
+// Google TTS Helper
+function playGoogleTTS(text, lang) {
+  // Basic cleaning
+  const cleanText = text.replace(/[\n\r]+/g, ' ').trim();
+  if (!cleanText) return;
+
+  // Google TTS URL (unofficial but standard for extensions)
+  // client=gtx, tl=targetLang, q=query
+  const url = `https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=${lang}&dt=t&q=${encodeURIComponent(cleanText)}`;
+
+  const audio = new Audio(url);
+  audio.play().catch(e => {
+    console.error('GTTS Play failed', e);
+    // Fallback to browser
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang;
+    window.speechSynthesis.speak(u);
+  });
+}
+
+// Language Map Helper
+function mapLanguageToCode(langName, fullLocale = false) {
+  const l = (langName || '').toLowerCase();
+
+  if (l.includes('vietnam')) return fullLocale ? 'vi-VN' : 'vi';
+  if (l.includes('japan')) return fullLocale ? 'ja-JP' : 'ja';
+  if (l.includes('korea')) return fullLocale ? 'ko-KR' : 'ko';
+  if (l.includes('china')) return fullLocale ? 'zh-CN' : 'zh-CN';
+  if (l.includes('french')) return fullLocale ? 'fr-FR' : 'fr';
+  if (l.includes('german')) return fullLocale ? 'de-DE' : 'de';
+  if (l.includes('russia')) return fullLocale ? 'ru-RU' : 'ru';
+
+  // Default English
+  return fullLocale ? 'en-US' : 'en';
+}
+
+// Simple logic to compare strings (Levenshtein-like or just word overlap)
+function calculateSimilarity(s1, s2) {
+  if (!s1 || !s2) return 0;
+  const cleanS1 = s1.toLowerCase().replace(/[^\w\s]/gi, '').split(/\s+/).filter(x => x);
+  const cleanS2 = s2.toLowerCase().replace(/[^\w\s]/gi, '').split(/\s+/).filter(x => x);
+
+  if (cleanS1.length === 0) return 0;
+
+  let matches = 0;
+  const set1 = new Set(cleanS1);
+  // Simple word match count. For stricter check, we need sequence alignment.
+  // But for "fun" scoring, this is enough.
+  cleanS2.forEach(w => {
+    if (set1.has(w)) matches++;
+  });
+
+  // Cap at 1.0
+  let score = matches / Math.max(cleanS1.length, cleanS2.length);
+  if (score > 1) score = 1;
+  return score;
 }
 
 function showError(title, message) {
@@ -567,7 +739,10 @@ function makeDraggable(element) {
 
 function escapeHtml(text) {
   if (!text) return '';
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }

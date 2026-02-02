@@ -1,10 +1,11 @@
 /* CSS Variables & Theme Definitions */
 :root {
-  --ocr-bg: rgba(255, 255, 255, 0.96);
+  --ocr-bg: rgba(255, 255, 255, 0.98);
   --ocr-text: #2d3436;
-  --ocr-border: #dfe6e9;
-  --ocr-header-bg: #f8f9fa;
-  --ocr-text-block-bg: #fcfcfd;
+  --ocr-border: #b2bec3;
+  /* Darker grey border for visibility */
+  --ocr-header-bg: #f5f6fa;
+  --ocr-text-block-bg: #ffffff;
   --ocr-label: #636e72;
   --ocr-shadow: rgba(0, 0, 0, 0.15);
   --ocr-accent: #6c5ce7;
@@ -15,16 +16,16 @@
 
 /* Dark Theme Class */
 .ocr-theme-dark {
-  --ocr-bg: rgba(43, 45, 49, 0.96);
-  --ocr-text: #dbdee1;
-  --ocr-border: #1e1f22;
-  /* darker border */
-  --ocr-header-bg: #313338;
+  --ocr-bg: rgba(43, 45, 49, 0.98);
+  --ocr-text: #f2f3f5;
+  --ocr-border: #6b6f75;
+  /* Lighter/Whiter border for dark mode contrast */
+  --ocr-header-bg: #2b2d31;
   --ocr-text-block-bg: #1e1f22;
-  --ocr-label: #949ba4;
+  --ocr-label: #b5bac1;
   --ocr-shadow: rgba(0, 0, 0, 0.4);
   --ocr-accent: #5865f2;
-  --ocr-surface: #2b2d31;
+  --ocr-surface: #313338;
   --ocr-button-hover: #404249;
   --ocr-close-hover-color: #f23f42;
 }
@@ -133,17 +134,127 @@
   background: none;
   border: none;
   color: var(--ocr-label);
-  font-size: 24px;
+  font-size: 32px;
+  /* Made larger as requested */
   line-height: 1;
   cursor: pointer;
-  padding: 0 4px;
+  padding: 4px 12px;
   border-radius: 4px;
-  transition: background 0.2s;
+  transition: background 0.2s, color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #ocr-result-close:hover {
   background: var(--ocr-button-hover);
   color: var(--ocr-close-hover-color);
+}
+
+.ocr-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: -15px;
+  margin-bottom: 20px;
+  justify-content: flex-end;
+}
+
+.ocr-icon-btn {
+  background: transparent;
+  border: 1px solid var(--ocr-border);
+  color: var(--ocr-text);
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.ocr-icon-btn:hover {
+  background: var(--ocr-button-hover);
+  border-color: var(--ocr-accent);
+}
+
+.ocr-icon-btn i,
+.ocr-icon-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+#ocr-pronunciation-feedback {
+  background: var(--ocr-surface);
+  border: 1px dashed var(--ocr-border);
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 15px;
+  font-size: 13px;
+  display: none;
+}
+
+#ocr-pronunciation-feedback.active {
+  display: block;
+}
+
+#ocr-btn-retry {
+  margin-top: 8px;
+  background: transparent;
+  border: 1px solid var(--ocr-accent);
+  color: var(--ocr-accent);
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  display: none;
+  /* Hidden until result shown */
+  width: 100%;
+}
+
+#ocr-btn-retry:hover {
+  background: rgba(108, 92, 231, 0.1);
+}
+
+.ocr-theme-dark #ocr-btn-retry:hover {
+  background: rgba(88, 101, 242, 0.1);
+}
+
+.ocr-score-high {
+  color: #00b894;
+  font-weight: bold;
+}
+
+.ocr-score-mid {
+  color: #fdcb6e;
+  font-weight: bold;
+}
+
+.ocr-score-low {
+  color: #d63031;
+  font-weight: bold;
+}
+
+#ocr-scan-next {
+  width: 100%;
+  padding: 12px;
+  background: var(--ocr-accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+#ocr-scan-next:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 #ocr-result-content {
