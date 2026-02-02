@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      width: 300px;
+      padding: 15px;
+      font-family: Arial, sans-serif;
+      background: white;
+      color: black;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0 15px 0;
+      box-sizing: border-box;
+      border: 1px solid black;
+      background: white;
+      color: black;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-width: 2px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background: white;
+      color: black;
+      border: 1px solid black;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #f0f0f0;
+    }
+
+    label {
+      font-weight: bold;
+      font-size: 12px;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    h3 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      border-bottom: 1px solid black;
+      padding-bottom: 10px;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <h3>Screen OCR & Translator</h3>
+
+  <label>API Provider:</label>
+  <select id="provider">
+    <option value="groq">Groq (FREE)</option>
+  </select>
+
+  <label>API Key:</label>
+  <input type="password" id="apiKey" placeholder="Nhập Groq API key">
+
+  <label>Dịch sang:</label>
+  <select id="targetLang">
+    <option value="vi">Tiếng Việt</option>
+    <option value="en">English</option>
+  </select>
+
+  <button id="startBtn">Bắt đầu chụp</button>
+
+  <script src="popup.js"></script>
+</body>
+
+</html>
