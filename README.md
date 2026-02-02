@@ -1,6 +1,6 @@
 # Screen OCR Translator
 
-https://youtu.be/9u2VSNkc-70
+[![DEMO](https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQasw8dLGW8QWUq_2j8cEqzyQK12lq9BoDbnQ&s)](https://youtu.be/9u2VSNkc-70)
 
 ## Overview
 
