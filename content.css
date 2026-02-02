@@ -1,3 +1,34 @@
+/* CSS Variables & Theme Definitions */
+:root {
+  --ocr-bg: rgba(255, 255, 255, 0.96);
+  --ocr-text: #2d3436;
+  --ocr-border: #dfe6e9;
+  --ocr-header-bg: #f8f9fa;
+  --ocr-text-block-bg: #fcfcfd;
+  --ocr-label: #636e72;
+  --ocr-shadow: rgba(0, 0, 0, 0.15);
+  --ocr-accent: #6c5ce7;
+  --ocr-surface: #ffffff;
+  --ocr-button-hover: #dfe6e9;
+  --ocr-close-hover-color: #d63031;
+}
+
+/* Dark Theme Class */
+.ocr-theme-dark {
+  --ocr-bg: rgba(43, 45, 49, 0.96);
+  --ocr-text: #dbdee1;
+  --ocr-border: #1e1f22;
+  /* darker border */
+  --ocr-header-bg: #313338;
+  --ocr-text-block-bg: #1e1f22;
+  --ocr-label: #949ba4;
+  --ocr-shadow: rgba(0, 0, 0, 0.4);
+  --ocr-accent: #5865f2;
+  --ocr-surface: #2b2d31;
+  --ocr-button-hover: #404249;
+  --ocr-close-hover-color: #f23f42;
+}
+
 #ocr-overlay {
   position: fixed;
   top: 0;
@@ -17,22 +48,22 @@
   top: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background: #f8f9fa;
-  color: #333;
-  border: 1px solid #ddd;
+  background: var(--ocr-header-bg);
+  color: var(--ocr-text);
+  border: 1px solid var(--ocr-border);
   padding: 12px 24px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   font-size: 14px;
   border-radius: 8px;
   /* Medium radius */
   pointer-events: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--ocr-shadow);
   font-weight: 500;
 }
 
 #ocr-selection {
   position: absolute;
-  border: 2px solid #6c5ce7;
+  border: 2px solid var(--ocr-accent);
   /* Distinct but nice color */
   background: rgba(108, 92, 231, 0.1);
   display: none;
@@ -45,11 +76,11 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: #ffffff;
-  color: #2d3436;
-  border: 1px solid #dfe6e9;
+  background: var(--ocr-bg);
+  color: var(--ocr-text);
+  border: 1px solid var(--ocr-border);
   padding: 20px 40px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px var(--ocr-shadow);
   z-index: 2147483648;
   font-size: 16px;
   font-family: sans-serif;
@@ -64,14 +95,12 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(255, 255, 255, 0.96);
-  /* Slightly transparent */
-  color: #2d3436;
-  border: 1px solid #dfe6e9;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+  background: var(--ocr-bg);
+  color: var(--ocr-text);
+  border: 1px solid var(--ocr-border);
+  box-shadow: 0 15px 35px var(--ocr-shadow);
   z-index: 2147483648;
   width: 500px;
-  /* Wider for better text fit */
   max-width: 95vw;
   max-height: 85vh;
   display: flex;
@@ -79,17 +108,17 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   border-radius: 12px;
   overflow: hidden;
-  /* transition: all 0.2s ease; REMOVED to fix drag lag */
+  /* transition removed for smooth drag */
 }
 
 #ocr-result-header {
   padding: 12px 20px;
-  border-bottom: 1px solid #f1f2f6;
+  border-bottom: 1px solid var(--ocr-border);
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: move;
-  background: #f8f9fa;
+  background: var(--ocr-header-bg);
   user-select: none;
 }
 
@@ -97,13 +126,13 @@
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #2d3436;
+  color: var(--ocr-text);
 }
 
 #ocr-result-close {
   background: none;
   border: none;
-  color: #636e72;
+  color: var(--ocr-label);
   font-size: 24px;
   line-height: 1;
   cursor: pointer;
@@ -113,23 +142,23 @@
 }
 
 #ocr-result-close:hover {
-  background: #dfe6e9;
-  color: #d63031;
+  background: var(--ocr-button-hover);
+  color: var(--ocr-close-hover-color);
 }
 
 #ocr-result-content {
   padding: 20px;
   overflow-y: auto;
-  color: #2d3436;
+  color: var(--ocr-text);
   background: transparent;
 }
 
 .ocr-text-block {
-  border: 1px solid #dfe6e9;
+  border: 1px solid var(--ocr-border);
   padding: 12px;
   margin: 8px 0 20px 0;
-  background: #fcfcfd;
-  color: #2d3436;
+  background: var(--ocr-text-block-bg);
+  color: var(--ocr-text);
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, adjust, monospace;
   /* Strict monospace */
   white-space: pre-wrap;
@@ -143,7 +172,7 @@
   font-weight: 600;
   font-size: 12px;
   text-transform: uppercase;
-  color: #636e72;
+  color: var(--ocr-label);
   letter-spacing: 0.5px;
   margin-bottom: 6px;
   display: flex;
@@ -151,33 +180,34 @@
   align-items: center;
 }
 
-/* New: Language Selector Styles */
+/* Language Selector Styles */
 .ocr-lang-select {
   padding: 4px 8px;
-  border: 1px solid #dfe6e9;
+  border: 1px solid var(--ocr-border);
   border-radius: 6px;
   font-size: 12px;
-  color: #2d3436;
-  background: white;
+  color: var(--ocr-text);
+  background: var(--ocr-surface);
   margin-left: 10px;
   outline: none;
   cursor: pointer;
 }
 
 .ocr-lang-select:focus {
-  border-color: #6c5ce7;
+  border-color: var(--ocr-accent);
 }
 
-/* New: Error Notification Toast */
+/* Error Notification Toast */
 #ocr-error-toast {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background: #fff;
+  background: var(--ocr-surface);
+  color: var(--ocr-text);
   border-left: 4px solid #ff7675;
   padding: 15px 20px;
   border-radius: 8px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 5px 15px var(--ocr-shadow);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -189,7 +219,7 @@
 
 #ocr-error-title {
   font-weight: bold;
-  color: #d63031;
+  color: #ff7675;
   display: block;
   font-size: 14px;
   margin-bottom: 2px;
@@ -197,7 +227,7 @@
 
 #ocr-error-message {
   font-size: 13px;
-  color: #636e72;
+  color: var(--ocr-label);
 }
 
 @keyframes slideIn {
@@ -210,4 +240,58 @@
     transform: translateX(0);
     opacity: 1;
   }
+}
+
+/* Floating Action Button */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+  }
+}
+
+#ocr-fab {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 50px;
+  height: 50px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2147483645;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid #eee;
+}
+
+#ocr-fab:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+#ocr-fab svg {
+  width: 24px;
+  height: 24px;
+  fill: #333;
+}
+
+/* Dark Mode for FAB */
+.ocr-theme-dark #ocr-fab {
+  background: #2b2d31;
+  border-color: #1e1f22;
+}
+
+.ocr-theme-dark #ocr-fab svg {
+  fill: #dbdee1;
 }

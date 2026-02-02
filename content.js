@@ -6,24 +6,106 @@ let overlay, selectionBox, startX, startY, isDrawing = false;
 // Listen for init message from popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'init') {
-    console.log('🎯 Starting capture...');
+    console.log('🎯 Starting capture from message...');
     startCapture();
     sendResponse({ success: true });
   }
   return true;
 });
 
-function startCapture() {
+// Auto-create FAB on load
+(async function initFAB() {
+  console.log('🚀 Initializing OCR FAB...');
+  const config = await chrome.storage.sync.get(['theme', 'showFab']);
+
+  // Check setting (default true)
+  if (config.showFab === false) {
+    removeFAB();
+    return;
+  }
+
+  createOrUpdateFAB(config.theme);
+})();
+
+// Listen for storage changes to update FAB immediately
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  if (namespace === 'sync') {
+    if (changes.showFab) {
+      if (changes.showFab.newValue === false) {
+        removeFAB();
+      } else {
+        chrome.storage.sync.get(['theme'], (result) => {
+          createOrUpdateFAB(result.theme);
+        });
+      }
+    }
+    if (changes.theme) {
+      // Update theme on existing FAB
+      const fab = document.getElementById('ocr-fab');
+      if (fab) {
+        // Determine new class
+        const theme = changes.theme.newValue || 'light';
+        const isDark = theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (isDark) fab.classList.add('ocr-theme-dark');
+        else fab.classList.remove('ocr-theme-dark');
+      }
+    }
+  }
+});
+
+function removeFAB() {
+  const fab = document.getElementById('ocr-fab');
+  if (fab) fab.remove();
+}
+
+function createOrUpdateFAB(theme) {
+  if (document.getElementById('ocr-fab')) return; // Already exists
+
+  const isDark = theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const themeClass = isDark ? 'ocr-theme-dark' : '';
+
+  const fab = document.createElement('div');
+  fab.id = 'ocr-fab';
+  if (themeClass) fab.classList.add(themeClass);
+
+  // Force pointer events and z-index safety
+  fab.style.pointerEvents = 'auto'; // Ensure clickable
+
+  // Icon
+  fab.innerHTML = `<svg viewBox="0 0 24 24"><path d="M3 5v4h2V5h4V3H5c-1.1 0-2 .9-2 2zm2 10H3v4c0 1.1.9 2 2 2h4v-2H5v-4zm14 4h-4v2h4c1.1 0 2-.9 2-2v-4h-2v4zm0-16h-4v2h4v4h2V5c0-1.1-.9-2-2-2z"/></svg>`;
+
+  document.body.appendChild(fab);
+
+  // Use mousedown instead of click to avoid potential conflicts with drag listeners or other overlays
+  fab.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    console.log('🔘 FAB Clicked');
+    startCapture();
+  });
+}
+
+let currentThemeClass = '';
+
+async function startCapture() {
   // Clean up any existing overlay first
   cleanup();
+
+  // Determine theme
+  const config = await chrome.storage.sync.get(['theme']);
+  const theme = config.theme || 'light';
+  const isDark = theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  currentThemeClass = isDark ? 'ocr-theme-dark' : '';
 
   console.log('📸 Creating overlay...');
 
   // Create overlay
   overlay = document.createElement('div');
   overlay.id = 'ocr-overlay';
+  if (currentThemeClass) overlay.classList.add(currentThemeClass);
+
   overlay.innerHTML = `
-    <div id="ocr-hint">Kéo chuột để chọn vùng • ESC để hủy</div>
+    <div id="ocr-hint" class="${currentThemeClass}">Kéo chuột để chọn vùng • ESC để hủy</div>
     <div id="ocr-selection"></div>
   `;
   document.body.appendChild(overlay);
@@ -100,6 +182,7 @@ async function onMouseUp(e) {
   // Show loading
   const loading = document.createElement('div');
   loading.id = 'ocr-loading';
+  if (currentThemeClass) loading.classList.add(currentThemeClass);
   loading.textContent = 'Đang xử lý...';
   document.body.appendChild(loading);
 
@@ -266,6 +349,7 @@ function showResult(result, apiKey) {
 
   const resultBox = document.createElement('div');
   resultBox.id = 'ocr-result';
+  if (currentThemeClass) resultBox.classList.add(currentThemeClass);
 
   // Available languages
   const languages = [
@@ -343,6 +427,7 @@ function showResult(result, apiKey) {
 function showError(title, message) {
   const toast = document.createElement('div');
   toast.id = 'ocr-error-toast';
+  if (currentThemeClass) toast.classList.add(currentThemeClass);
   toast.innerHTML = `
         <div style="font-size: 24px;">⚠️</div>
         <div>

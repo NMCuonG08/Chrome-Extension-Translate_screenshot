@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Cài đặt Screen OCR</title>
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: #fcfcfd;
+            color: #2d3436;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 40px 20px;
+        }
+
+        h2 {
+            margin-top: 0;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #2d3436;
+        }
+
+        .section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #dfe6e9;
+            margin-bottom: 20px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0 20px 0;
+            box-sizing: border-box;
+            border: 1px solid #dfe6e9;
+            background: #fbfbfb;
+            color: #2d3436;
+            border-radius: 8px;
+            outline: none;
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #6c5ce7;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #2d3436;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 10px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            background: #444;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 13px;
+            color: #636e72;
+            display: block;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .hint {
+            font-size: 13px;
+            color: #999;
+            margin-top: -10px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        #status {
+            text-align: center;
+            margin-top: 15px;
+            height: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        #status.success {
+            color: #00b894;
+            opacity: 1;
+        }
+
+        #status.error {
+            color: #d63031;
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Cài đặt Screen Translator</h2>
+
+        <div class="section">
+            <label>API Provider</label>
+            <select id="provider">
+                <option value="groq">Groq AI (Recommended)</option>
+            </select>
+
+            <label>Groq API Key</label>
+            <input type="password" id="apiKey" placeholder="gsk_...">
+            <div class="hint">
+                Nhập API key miễn phí từ console.groq.com
+            </div>
+
+            <label>Giao diện (Theme)</label>
+            <select id="theme">
+                <option value="light">Sáng (Light)</option>
+                <option value="dark">Tối (Dark)</option>
+                <option value="auto">Tự động (Theo hệ thống)</option>
+            </select>
+
+            <label>Dịch mặc định sang</label>
+            <select id="targetLang">
+                <option value="vi">Tiếng Việt (Vietnamese)</option>
+                <option value="en">English</option>
+                <option value="ja">Japanese</option>
+                <option value="ko">Korean</option>
+                <option value="zh">Chinese</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+                <option value="ru">Russian</option>
+            </select>
+
+            <button id="saveBtn">Lưu Cấu Hình</button>
+            <div id="status">Đã lưu thành công!</div>
+        </div>
+    </div>
+    <script src="options.js"></script>
+</body>
+
+</html>

@@ -83,11 +83,23 @@
   <label>API Key:</label>
   <input type="password" id="apiKey" placeholder="Nhập Groq API key">
 
+  <label>Giao diện (Theme):</label>
+  <select id="theme">
+    <option value="light">Sáng (Light)</option>
+    <option value="dark">Tối (Dark)</option>
+    <option value="auto">Tự động (Auto)</option>
+  </select>
+
   <label>Dịch sang:</label>
   <select id="targetLang">
     <option value="vi">Tiếng Việt</option>
     <option value="en">English</option>
   </select>
+
+  <div style="margin-bottom: 15px; display: flex; align-items: center;">
+    <input type="checkbox" id="showFab" style="width: auto; margin: 0 10px 0 0;">
+    <label for="showFab" style="margin: 0; cursor: pointer;">Hiện nút nổi (Quick Button)</label>
+  </div>
 
   <button id="startBtn">Bắt đầu chụp</button>
 
