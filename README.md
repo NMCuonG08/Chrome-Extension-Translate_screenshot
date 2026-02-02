@@ -1,6 +1,6 @@
 # Screen OCR Translator
 
-[Insert Introduction Video Here]
+https://youtu.be/9u2VSNkc-70
 
 ## Overview
 
