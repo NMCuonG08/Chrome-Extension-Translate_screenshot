@@ -1,5 +1,5 @@
 // Load saved config
-chrome.storage.sync.get(['apiKey', 'provider', 'targetLang', 'theme', 'showFab', 'hotkeyMode'], (result) => {
+chrome.storage.sync.get(['apiKey', 'provider', 'targetLang', 'theme', 'showFab', 'hotkeyMode', 'translationMode'], (result) => {
   if (result.apiKey) document.getElementById('apiKey').value = result.apiKey;
   if (result.provider) document.getElementById('provider').value = result.provider;
   if (result.targetLang) document.getElementById('targetLang').value = result.targetLang;
@@ -31,7 +31,6 @@ function saveConfig() {
       provider: document.getElementById('provider').value,
       targetLang: document.getElementById('targetLang').value,
       theme: document.getElementById('theme').value,
-      showFab: document.getElementById('showFab').checked,
       showFab: document.getElementById('showFab').checked,
       hotkeyMode: document.getElementById('hotkeyMode').value,
       translationMode: document.getElementById('translationMode').value

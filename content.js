@@ -21,16 +21,19 @@ if (window.__OCR_CONTENT_SCRIPT_LOADED__) {
   (async function initFAB() {
     console.log('🚀 Initializing OCR FAB...');
     const config = await chrome.storage.sync.get(['theme', 'showFab', 'hotkeyMode']);
+    console.log('📦 FAB Config:', config);
 
     // Set global hotkey mode (default 'alt_q')
     window.ocrHotkeyMode = config.hotkeyMode || 'alt_q';
 
     // Check setting (default true)
     if (config.showFab === false) {
+      console.log('🚫 FAB disabled by user setting');
       removeFAB();
       return;
     }
 
+    console.log('✅ Creating FAB...');
     createOrUpdateFAB(config.theme);
   })();
 
@@ -454,8 +457,6 @@ if (window.__OCR_CONTENT_SCRIPT_LOADED__) {
     <div class="ocr-vocab-body">${listHtml}</div>
   `;
 
-    // Store origin rect for connector line
-    card.dataset.originRect = JSON.stringify(rect);
     document.body.appendChild(card);
 
     setupCommonCardEvents(card, apiKey, rect);
@@ -497,7 +498,6 @@ if (window.__OCR_CONTENT_SCRIPT_LOADED__) {
     </div>
   `;
 
-    card.dataset.originRect = JSON.stringify(rect);
     document.body.appendChild(card);
 
     setupCommonCardEvents(card, apiKey, rect);
@@ -520,9 +520,7 @@ if (window.__OCR_CONTENT_SCRIPT_LOADED__) {
     });
 
     const dragBar = card.querySelector('.ocr-vocab-drag-bar');
-    // Retrieve originRect from dataset
-    const originRect = card.dataset.originRect ? JSON.parse(card.dataset.originRect) : null;
-    makeFABDraggable(card, dragBar, originRect);
+    makeFABDraggable(card, dragBar);
 
     // Stop propagation to prevent triggering crop selection on document
     // We use stopImmediatePropagation to be absolutely sure.
@@ -541,10 +539,6 @@ if (window.__OCR_CONTENT_SCRIPT_LOADED__) {
   }
 
   function cleanupCard(card) {
-    if (card.dataset.connectorId) {
-      const line = document.getElementById(card.dataset.connectorId);
-      if (line) line.remove();
-    }
     card.remove();
   }
 
@@ -999,18 +993,12 @@ if (window.__OCR_CONTENT_SCRIPT_LOADED__) {
   }
 
   // Draggable Helper (Now supports optional specific handle)
-  function makeFABDraggable(element, dragHandle = null, originRect = null) {
+  function makeFABDraggable(element, dragHandle = null) {
     let isMinimallyDragged = false;
     let startX, startY;
     let initialLeft, initialTop;
-    let svgLine = null;
 
     const target = dragHandle || element;
-
-    // Create connector if origin provided
-    if (originRect) {
-      svgLine = createConnector(originRect, element);
-    }
 
     const onMouseDown = (e) => {
       // Left click only
@@ -1057,9 +1045,6 @@ if (window.__OCR_CONTENT_SCRIPT_LOADED__) {
       if (isMinimallyDragged) {
         element.style.left = (initialLeft + dx) + 'px';
         element.style.top = (initialTop + dy) + 'px';
-
-        // Update Connector
-        if (svgLine) updateConnector(svgLine, originRect, element);
       }
     };
 
@@ -1087,9 +1072,6 @@ if (window.__OCR_CONTENT_SCRIPT_LOADED__) {
 
       element.style.left = currentLeft + 'px';
       element.style.top = currentTop + 'px';
-
-      // Final update
-      if (svgLine) updateConnector(svgLine, originRect, element);
     };
 
     target.addEventListener('mousedown', onMouseDown);
@@ -1098,121 +1080,6 @@ if (window.__OCR_CONTENT_SCRIPT_LOADED__) {
     // Update handle cursor on active
     target.addEventListener('mousedown', () => target.style.cursor = 'grabbing');
     target.addEventListener('mouseup', () => target.style.cursor = 'grab');
-
-    // Attach SVG cleanup to element remove
-    // We hook into the element's removal if possible, but DOMNodeRemoved is deprecated and mutation observers are overkill.
-    // Instead, we attach the line ID to the element and let the close button handler clean it up.
-    if (svgLine) {
-      element.dataset.connectorId = svgLine.id;
-    }
-  }
-
-  // Connector Logic
-  function getConnectorLayer() {
-    let layer = document.getElementById('ocr-connectors');
-    if (!layer) {
-      layer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      layer.id = 'ocr-connectors';
-      layer.style.position = 'fixed';
-      layer.style.top = '0';
-      layer.style.left = '0';
-      layer.style.width = '100%';
-      layer.style.height = '100%';
-      layer.style.pointerEvents = 'none';
-      layer.style.zIndex = '2147483640'; // Below cards
-      document.body.appendChild(layer);
-    }
-    return layer;
-  }
-
-  function createConnector(originRect, cardElement) {
-    const layer = getConnectorLayer();
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.id = 'connector-' + cardElement.id;
-    line.setAttribute('stroke', '#b2bec3');
-    line.setAttribute('stroke-width', '2');
-    line.setAttribute('stroke-dasharray', '5,5'); // Dashed line
-    layer.appendChild(line);
-    updateConnector(line, originRect, cardElement);
-    return line;
-  }
-
-  function updateConnector(line, originRect, cardElement) {
-    const cardRect = cardElement.getBoundingClientRect();
-
-    // Start: Center of scanned area
-    // We need absolute document positions? No, SVG is fixed.
-    // Wait, if users scroll, originRect (captured relative to viewport initially) might be wrong?
-    // The 'rect' passed to us was from getBoundingClientRect() at capture time?
-    // Yes, 'rect' from selectionBox.getBoundingClientRect().
-    // If the user scrolls, the highlighted text moves, but our 'rect' numbers are static from capture time.
-    // THIS IS A PROBLEM if we simply use old numbers.
-    // HOWEVER, the Card is absolute positioned (document relative).
-    // The SVG is fixed.
-    // We should make the SVG absolute and match document size?
-    // OR we keep simple: The connector points to where the capture WAS.
-    // Actually, to make it stick to text, we'd need to track scroll.
-    // Keep it simple: Points to the static scan location relative to viewport (fixed) or document (absolute).
-    // Let's use Fixed SVG.
-    // But wait, the card is absolute (scrolls with page).
-    // If scan was on top of page, and we scroll down, card moves up.
-    // Origin rect should also act like it's on the page.
-    // So we calculate coordinates relative to viewport.
-
-    // If card is 'absolute', cardRect will be relative to viewport (because prompt is getBoundingClientRect).
-    // Correct.
-
-    // Origin needs to be adjusted for scroll?
-    // The 'rect' passed in is viewport-relative at that moment.
-    // We need to store Document coordinates for origin.
-    // Let's assume 'originRect' has .top/left relative to VIEWPORT at capture time.
-    // We convert to Document coords for stability?
-    // No, let's keep it simple. If usage is "scan and read", usually static.
-    // BUT the lines will look weird if we scroll.
-    // Let's just accept static line for now or update on scroll event?
-    // Let's update on scroll.
-
-    // Simply:
-    // x1, y1 = Origin Center (Document Relative)
-    // x2, y2 = Card Center (Document Relative)
-    // But line is in a Fixed SVG? No, make SVG properly layered.
-    // Let's just set the coordinates based on current visual positions.
-
-    const originX = originRect.left + originRect.width / 2;
-    const originY = originRect.top + originRect.height / 2;
-
-    // Account for current scroll status to "simulate" sticking to page?
-    // Actually, 'rect' was captured bounding client rect.
-    // If we want it to stay with the text, we should have saved scroll offset.
-    // We didn't.
-    // Let's assume the connector points to the *initial* capture spot relative to screen?
-    // No, that's bad if card scrolls away.
-
-    // Let's just point to the Card.
-    // And the other end?
-    // Let's use the card's initial "top/left" as the anchor anchor?
-    // The user said "nối về để nhận diện".
-    // Let's try to infer:
-    // Origin X/Y + (CurrentScrollY - CaptureScrollY).
-    // Too complex without saved state.
-
-    // SIMPLIFICATION:
-    // Just draw line from Card to the "Ghost Box" of capture.
-    // We will assume 'originRect' is effectively the position on screen.
-
-    // We will simply draw x1, y1 to x2, y2.
-
-    const cardX = cardRect.left + cardRect.width / 2;
-    const cardY = cardRect.top + cardRect.height / 2;
-
-    line.setAttribute('x1', originX);
-    line.setAttribute('y1', originY);
-    line.setAttribute('x2', cardX);
-    line.setAttribute('y2', cardY);
-
-    // Fade out line if card is on top of origin
-    const dist = Math.hypot(cardX - originX, cardY - originY);
-    line.style.opacity = dist < 50 ? '0' : '0.5';
   }
 
 } // End of if (!window.__OCR_CONTENT_SCRIPT_LOADED__)
