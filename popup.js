@@ -1,10 +1,14 @@
 // Load saved config
-chrome.storage.sync.get(['apiKey', 'provider', 'targetLang', 'theme', 'showFab'], (result) => {
+chrome.storage.sync.get(['apiKey', 'provider', 'targetLang', 'theme', 'showFab', 'hotkeyMode'], (result) => {
   if (result.apiKey) document.getElementById('apiKey').value = result.apiKey;
   if (result.provider) document.getElementById('provider').value = result.provider;
   if (result.targetLang) document.getElementById('targetLang').value = result.targetLang;
   if (result.theme) document.getElementById('theme').value = result.theme;
   document.getElementById('showFab').checked = result.showFab !== false; // Default true
+
+  // Hotkey default: alt_q
+  const mode = result.hotkeyMode || 'alt_q';
+  document.getElementById('hotkeyMode').value = mode;
 });
 
 // Save on change
@@ -13,16 +17,20 @@ document.getElementById('provider').addEventListener('change', saveConfig);
 document.getElementById('targetLang').addEventListener('change', saveConfig);
 document.getElementById('theme').addEventListener('change', saveConfig);
 document.getElementById('showFab').addEventListener('change', saveConfig);
+document.getElementById('hotkeyMode').addEventListener('change', saveConfig);
 
 function saveConfig() {
-  const config = {
-    apiKey: document.getElementById('apiKey').value,
-    provider: document.getElementById('provider').value,
-    targetLang: document.getElementById('targetLang').value,
-    theme: document.getElementById('theme').value,
-    showFab: document.getElementById('showFab').checked
-  };
-  chrome.storage.sync.set(config);
+  return new Promise((resolve) => {
+    const config = {
+      apiKey: document.getElementById('apiKey').value,
+      provider: document.getElementById('provider').value,
+      targetLang: document.getElementById('targetLang').value,
+      theme: document.getElementById('theme').value,
+      showFab: document.getElementById('showFab').checked,
+      hotkeyMode: document.getElementById('hotkeyMode').value
+    };
+    chrome.storage.sync.set(config, resolve);
+  });
 }
 
 // Start capture
@@ -34,8 +42,8 @@ document.getElementById('startBtn').addEventListener('click', async () => {
     return;
   }
 
-  // Save first
-  saveConfig();
+  // Save first and wait
+  await saveConfig();
 
   // Get current tab
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });

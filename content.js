@@ -16,7 +16,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 // Auto-create FAB on load
 (async function initFAB() {
   console.log('🚀 Initializing OCR FAB...');
-  const config = await chrome.storage.sync.get(['theme', 'showFab']);
+  const config = await chrome.storage.sync.get(['theme', 'showFab', 'hotkeyMode']);
+
+  // Set global hotkey mode (default 'alt_q')
+  window.ocrHotkeyMode = config.hotkeyMode || 'alt_q';
 
   // Check setting (default true)
   if (config.showFab === false) {
@@ -50,6 +53,40 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
         else fab.classList.remove('ocr-theme-dark');
       }
     }
+    if (changes.hotkeyMode) {
+      window.ocrHotkeyMode = changes.hotkeyMode.newValue || 'alt_q';
+    }
+  }
+});
+
+// Global Hotkey Listener
+document.addEventListener('keydown', (e) => {
+  const mode = window.ocrHotkeyMode || 'alt_q';
+
+  if (mode === 'disabled') return;
+
+  let triggered = false;
+
+  if (mode === 'alt_q') {
+    // Alt+Q
+    if (e.altKey && (e.key === 'q' || e.key === 'Q')) {
+      triggered = true;
+    }
+  } else if (mode === 'q') {
+    // Single Q key. 
+    // Careful: Don't trigger if user is typing in an input!
+    const tag = e.target.tagName;
+    const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable;
+
+    if (!isInput && (e.key === 'q' || e.key === 'Q') && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      triggered = true;
+    }
+  }
+
+  if (triggered) {
+    e.preventDefault();
+    console.log('🎹 Hotkey Triggered:', mode);
+    startCapture();
   }
 });
 
@@ -76,8 +113,18 @@ function createOrUpdateFAB(theme) {
 
   document.body.appendChild(fab);
 
+  // Make draggable
+  makeFABDraggable(fab);
+
   // Use mousedown instead of click to avoid potential conflicts with drag listeners or other overlays
   fab.addEventListener('click', (e) => {
+    // If it was dragged, ignore click
+    if (fab.dataset.wasDragged === 'true') {
+      e.stopPropagation();
+      e.preventDefault();
+      return;
+    }
+
     e.stopPropagation();
     e.preventDefault();
     console.log('🔘 FAB Clicked');
@@ -745,4 +792,78 @@ function escapeHtml(text) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+function makeFABDraggable(element) {
+  let isMinimallyDragged = false;
+  let startX, startY;
+  let initialLeft, initialTop;
+
+  const onMouseDown = (e) => {
+    // Left click only
+    if (e.button !== 0) return;
+
+    e.preventDefault(); // Prevent text selection
+
+    startX = e.clientX;
+    startY = e.clientY;
+    isMinimallyDragged = false;
+    element.dataset.wasDragged = 'false';
+
+    // Current position
+    const rect = element.getBoundingClientRect();
+
+    // Switch from bottom/right to top/left if needed
+    element.style.bottom = 'auto';
+    element.style.right = 'auto';
+    element.style.left = rect.left + 'px';
+    element.style.top = rect.top + 'px';
+    element.style.transform = 'none'; // Remove hover scale effect during drag if needed, or keep it
+
+    initialLeft = rect.left;
+    initialTop = rect.top;
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
+
+  const onMouseMove = (e) => {
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+
+    // Check if moved enough to count as drag
+    if (!isMinimallyDragged && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
+      isMinimallyDragged = true;
+      element.dataset.wasDragged = 'true';
+    }
+
+    if (isMinimallyDragged) {
+      element.style.left = (initialLeft + dx) + 'px';
+      element.style.top = (initialTop + dy) + 'px';
+    }
+  };
+
+  const onMouseUp = (e) => {
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+
+    // Boundary check on release
+    const rect = element.getBoundingClientRect();
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+
+    let newLeft = rect.left;
+    let newTop = rect.top;
+
+    // Keep fully on screen
+    if (newLeft < 10) newLeft = 10;
+    if (newLeft > w - rect.width - 10) newLeft = w - rect.width - 10;
+    if (newTop < 10) newTop = 10;
+    if (newTop > h - rect.height - 10) newTop = h - rect.height - 10;
+
+    element.style.left = newLeft + 'px';
+    element.style.top = newTop + 'px';
+  };
+
+  element.addEventListener('mousedown', onMouseDown);
 }
