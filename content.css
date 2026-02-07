@@ -14,18 +14,21 @@
   --ocr-close-hover-color: #d63031;
 }
 
-/* Dark Theme Class */
+/* Dark Theme Class (Improved Contrast) */
 .ocr-theme-dark {
-  --ocr-bg: rgba(43, 45, 49, 0.98);
-  --ocr-text: #f2f3f5;
-  --ocr-border: #6b6f75;
-  /* Lighter/Whiter border for dark mode contrast */
+  --ocr-bg: rgba(30, 31, 34, 0.98);
+  /* Deeper gray/black */
+  --ocr-text: #ffffff;
+  --ocr-border: #4a4d52;
+  /* More subtle border */
   --ocr-header-bg: #2b2d31;
-  --ocr-text-block-bg: #1e1f22;
+  --ocr-text-block-bg: #111214;
+  /* Very dark for code blocks */
   --ocr-label: #b5bac1;
-  --ocr-shadow: rgba(0, 0, 0, 0.4);
-  --ocr-accent: #5865f2;
-  --ocr-surface: #313338;
+  --ocr-shadow: rgba(0, 0, 0, 0.6);
+  --ocr-accent: #7289da;
+  /* Original Discord Blurple (lighter) */
+  --ocr-surface: #383a40;
   --ocr-button-hover: #404249;
   --ocr-close-hover-color: #f23f42;
 }
@@ -89,6 +92,164 @@
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+/* --- Vocabulary/Result Card Styles (Hard UI) --- */
+.ocr-vocab-card {
+  position: absolute;
+  background: var(--ocr-bg);
+  color: var(--ocr-text);
+  border: 1px solid var(--ocr-border);
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
+  /* Hard shadow */
+  z-index: 2147483648;
+  width: auto;
+  min-width: 200px;
+  max-width: 400px;
+  border-radius: 0px;
+  /* Hard corners */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  user-select: text;
+}
+
+/* Full Translation Specifics */
+.ocr-full-card {
+  border-left: 4px solid var(--ocr-accent);
+  /* Accent indicator */
+}
+
+/* Minimal Drag Handle (Top Bar) */
+.ocr-vocab-drag-bar {
+  height: 20px;
+  /* Increased for better touch target */
+  background: var(--ocr-header-bg);
+  cursor: grab;
+  width: 100%;
+  border-bottom: 1px solid var(--ocr-border);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.ocr-vocab-drag-bar:active {
+  cursor: grabbing;
+}
+
+.ocr-vocab-drag-bar::after {
+  content: '';
+  width: 20px;
+  height: 2px;
+  background: var(--ocr-border);
+  /* Simple line handle */
+}
+
+.ocr-vocab-body {
+  padding: 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* Compact Single Line Row */
+.ocr-vocab-item {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--ocr-border);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ocr-vocab-item:last-child {
+  border-bottom: none;
+}
+
+.ocr-vocab-term {
+  font-weight: 700;
+  color: var(--ocr-accent);
+  white-space: nowrap;
+}
+
+.ocr-vocab-type {
+  font-size: 11px;
+  color: var(--ocr-label);
+  font-style: italic;
+  white-space: nowrap;
+  font-family: monospace;
+  /* Technical look */
+}
+
+.ocr-vocab-meaning {
+  color: var(--ocr-text);
+  flex: 1;
+}
+
+.ocr-orig-text {
+  color: var(--ocr-label);
+  font-style: italic;
+}
+
+.ocr-mini-speak {
+  background: none;
+  border: 1px solid var(--ocr-border);
+  border-radius: 0;
+  /* Hard button */
+  font-size: 10px;
+  cursor: pointer;
+  padding: 1px 5px;
+  opacity: 0.7;
+  margin-left: auto;
+}
+
+.ocr-mini-speak:hover {
+  background: var(--ocr-button-hover);
+  opacity: 1;
+}
+
+/* Floating Close Button */
+.ocr-close-btn-floating {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  background: var(--ocr-header-bg);
+  border: 1px solid var(--ocr-border);
+  border-radius: 50%;
+  color: var(--ocr-label);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  line-height: 1;
+  z-index: 10;
+  z-index: 10;
+  /* Always visible */
+  opacity: 1;
+  transition: transform 0.2s;
+}
+
+.ocr-vocab-card:hover .ocr-close-btn-floating {
+  opacity: 1;
+}
+
+.ocr-close-btn-floating:hover {
+  background: #ff7675;
+  color: white;
+  border-color: #ff7675;
+  transform: scale(1.1);
+}
+
+.ocr-vocab-empty {
+  padding: 12px;
+  text-align: center;
+  color: var(--ocr-label);
+  font-style: italic;
 }
 
 #ocr-result {

@@ -15,31 +15,37 @@ chrome.action.onClicked.addListener((tab) => {
 function startCapture(tabId) {
   console.log('📸 Starting capture for tab:', tabId);
 
-  // First inject CSS
-  chrome.scripting.insertCSS({
-    target: { tabId: tabId },
-    files: ['content.css']
-  }).then(() => {
-    console.log('✅ CSS injected');
-    // Then inject script
-    return chrome.scripting.executeScript({
-      target: { tabId: tabId },
-      files: ['content.js']
-    });
-  }).then(() => {
-    console.log('✅ Script injected');
-    // Wait a bit then send init message
-    setTimeout(() => {
-      chrome.tabs.sendMessage(tabId, { action: 'init' }, (response) => {
-        if (chrome.runtime.lastError) {
-          console.error('❌ Message error:', chrome.runtime.lastError.message);
-        } else {
-          console.log('✅ Capture started!');
-        }
+  // Content script is already injected by manifest.json, so just send message
+  // to start capture. If content script isn't ready, we'll get an error.
+  chrome.tabs.sendMessage(tabId, { action: 'init' }, (response) => {
+    if (chrome.runtime.lastError) {
+      console.warn('⚠️ Content script not ready, injecting manually...');
+      // Fallback: inject if not loaded (e.g., on extension install/update)
+      chrome.scripting.insertCSS({
+        target: { tabId: tabId },
+        files: ['content.css']
+      }).then(() => {
+        return chrome.scripting.executeScript({
+          target: { tabId: tabId },
+          files: ['content.js']
+        });
+      }).then(() => {
+        // Wait a bit then send init message
+        setTimeout(() => {
+          chrome.tabs.sendMessage(tabId, { action: 'init' }, (response2) => {
+            if (chrome.runtime.lastError) {
+              console.error('❌ Still failed after manual inject:', chrome.runtime.lastError.message);
+            } else {
+              console.log('✅ Capture started after manual inject!');
+            }
+          });
+        }, 100);
+      }).catch((error) => {
+        console.error('❌ Injection failed:', error);
       });
-    }, 100);
-  }).catch((error) => {
-    console.error('❌ Injection failed:', error);
+    } else {
+      console.log('✅ Capture started!');
+    }
   });
 }
 

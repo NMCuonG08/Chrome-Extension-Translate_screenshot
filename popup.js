@@ -9,6 +9,10 @@ chrome.storage.sync.get(['apiKey', 'provider', 'targetLang', 'theme', 'showFab',
   // Hotkey default: alt_q
   const mode = result.hotkeyMode || 'alt_q';
   document.getElementById('hotkeyMode').value = mode;
+
+  // Translation Mode default: vocabulary
+  const transMode = result.translationMode || 'vocabulary';
+  document.getElementById('translationMode').value = transMode;
 });
 
 // Save on change
@@ -18,6 +22,7 @@ document.getElementById('targetLang').addEventListener('change', saveConfig);
 document.getElementById('theme').addEventListener('change', saveConfig);
 document.getElementById('showFab').addEventListener('change', saveConfig);
 document.getElementById('hotkeyMode').addEventListener('change', saveConfig);
+document.getElementById('translationMode').addEventListener('change', saveConfig);
 
 function saveConfig() {
   return new Promise((resolve) => {
@@ -27,7 +32,9 @@ function saveConfig() {
       targetLang: document.getElementById('targetLang').value,
       theme: document.getElementById('theme').value,
       showFab: document.getElementById('showFab').checked,
-      hotkeyMode: document.getElementById('hotkeyMode').value
+      showFab: document.getElementById('showFab').checked,
+      hotkeyMode: document.getElementById('hotkeyMode').value,
+      translationMode: document.getElementById('translationMode').value
     };
     chrome.storage.sync.set(config, resolve);
   });
